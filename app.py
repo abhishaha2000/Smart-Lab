@@ -6,8 +6,8 @@ st.set_page_config(page_title="Smart Electronics Lab Assistant", page_icon="⚡"
 st.title("⚡ Smart Electronics Lab Assistant & Advanced Calculators")
 st.markdown("A professional digital lab tool for E&TC students and electronics hobbyists.")
 
-# Sidebar Navigation for All Lab Tools
-tool = st.sidebar.selectbox("Select Lab Tool", [
+# Sidebar Navigation
+selected_tool = st.sidebar.selectbox("Select Lab Tool", [
     "🎨 Resistor Color Code Calculator",
     "💡 LED Series Resistor Calculator",
     "🔋 Capacitor Code Decoder",
@@ -22,7 +22,7 @@ st.sidebar.markdown("---")
 st.sidebar.info("Developed for E&TC Students & Labs.")
 
 # 1. Resistor Calculator
-if tool == "🎨 Resistor Color Code Calculator":
+if selected_tool == "🎨 Resistor Color Code Calculator":
     st.subheader("🎨 4-Band Resistor Value Calculator")
     st.write("Select the color bands below to calculate the exact resistance value:")
     
@@ -58,7 +58,7 @@ if tool == "🎨 Resistor Color Code Calculator":
         st.success(f"🎯 Calculated Resistor Value: **{val_str}** ({tolerance})")
 
 # 2. LED Series Resistor Calculator
-elif tool == "💡 LED Series Resistor Calculator":
+elif selected_tool == "💡 LED Series Resistor Calculator":
     st.subheader("💡 LED Current Limiting Resistor Calculator")
     st.write("Calculate the exact resistor value required to protect an LED in your circuit:")
     
@@ -78,7 +78,7 @@ elif tool == "💡 LED Series Resistor Calculator":
             st.error("Supply Voltage must be greater than LED Forward Voltage!")
 
 # 3. Capacitor Code Decoder
-elif tool == "🔋 Capacitor Code Decoder":
+elif selected_tool == "🔋 Capacitor Code Decoder":
     st.subheader("🔋 Ceramic Capacitor Code Decoder")
     st.write("Enter the 3-digit code printed on the ceramic capacitor:")
     
@@ -101,7 +101,7 @@ elif tool == "🔋 Capacitor Code Decoder":
             st.error("Please enter a valid 3-digit numeric code.")
 
 # 4. 555 Timer Frequency Calculator
-elif tool == "⏱️ 555 Timer Frequency Calculator":
+elif selected_tool == "⏱️ 555 Timer Frequency Calculator":
     st.subheader("⏱️ 555 Astable Multivibrator Calculator")
     st.write("Calculate output frequency and time period for IC 555 in Astable mode:")
     
@@ -129,7 +129,7 @@ elif tool == "⏱️ 555 Timer Frequency Calculator":
         st.info(f"Time Period (T): {1/frequency:.4f} seconds")
 
 # 5. Voltage Divider Calculator
-elif tool == "⚡ Voltage Divider Calculator":
+elif selected_tool == "⚡ Voltage Divider Calculator":
     st.subheader("⚡ Voltage Divider Circuit Calculator")
     st.write("Calculate the output voltage across resistor R2:")
     
@@ -147,7 +147,7 @@ elif tool == "⚡ Voltage Divider Calculator":
         st.info(f"Current flowing through circuit: **{(vin / ((r1_val + r2_val) * 1000)) * 1000:.3f} mA**")
 
 # 6. RC Filter Cutoff Frequency Calculator
-elif tool == "🎛️ RC Filter Cutoff Frequency Calculator":
+elif selected_tool == "🎛️ RC Filter Cutoff Frequency Calculator":
     st.subheader("🎛️ RC Low-Pass / High-Pass Filter Calculator")
     st.write("Calculate the cutoff (corner) frequency for an RC filter:")
     
@@ -172,7 +172,7 @@ elif tool == "🎛️ RC Filter Cutoff Frequency Calculator":
         st.success(f"🎯 Cutoff Frequency (fc): **{fc_str}**")
 
 # 7. Op-Amp Gain Calculator
-elif tool == "📈 Op-Amp Gain Calculator":
+elif selected_tool == "📈 Op-Amp Gain Calculator":
     st.subheader("📈 Operational Amplifier (Op-Amp) Gain Calculator")
     mode = st.radio("Select Configuration", ["Inverting Amplifier", "Non-Inverting Amplifier"])
     
@@ -193,7 +193,7 @@ elif tool == "📈 Op-Amp Gain Calculator":
             st.info("Note: Non-inverting amplifier output is in phase with input.")
 
 # 8. Transistor & IC Pinout Reference
-elif tool == "🔌 Transistor & IC Pinout Reference":
+elif selected_tool == "🔌 Transistor & IC Pinout Reference":
     st.subheader("🔌 Transistor & IC Pinout Reference Guide")
     st.write("Select a component to view its exact pin configuration and maximum ratings:")
     
