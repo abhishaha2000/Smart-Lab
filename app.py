@@ -1,10 +1,10 @@
 import streamlit as st
 import math
 
-st.set_page_config(page_title="Universal Electronics & Lab Assistant", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="Smart Electronics Lab Assistant", page_icon="⚡", layout="wide")
 
-st.title("⚡ Comprehensive Digital & Power Electronics Lab Reference")
-st.markdown("Search **any Digital IC, Logic Gate, Power Device (SCR/TRIAC/IGBT), or Linear IC** instantly.")
+st.title("⚡ Smart Electronics Lab Assistant & Advanced Calculators")
+st.markdown("A professional digital lab tool for E&TC students and electronics hobbyists.")
 
 # Comprehensive Master Database for ALL Digital, Linear & Power Electronics Components
 master_component_db = {
@@ -62,7 +62,7 @@ menu_mode = st.sidebar.selectbox("Select Lab Tool", [
 ])
 
 st.sidebar.markdown("---")
-st.sidebar.info("E&TC Lab Assistant — All Digital ICs & Power Devices.")
+st.sidebar.info("Smart Electronics Lab Assistant — E&TC Department.")
 
 # 1. Universal Search Engine
 if menu_mode == "🔍 Universal IC & Component Search Engine":
@@ -119,12 +119,61 @@ elif menu_mode == "🎨 Resistor Color Code Calculator":
     with c3: mult = st.selectbox("Multiplier", list(color_dict.keys()))
     with c4: tol = st.selectbox("Tolerance", ["Gold (±5%)", "Silver (±10%)"])
         
-    if st.button("Calculate"):
+    if st.button("Calculate Resistance"):
         res = ((color_dict[b1][0] * 10) + color_dict[b2][0]) * color_dict[mult][1]
         val = f"{res / 1000000} MΩ" if res >= 1000000 else (f"{res / 1000} kΩ" if res >= 1000 else f"{res} Ω")
         st.success(f"🎯 Resistance: **{val}** ({tol})")
 
 # 5. LED Calculator
 elif menu_mode == "💡 LED Series Resistor Calculator":
-    st.subheader("💡 LED Resistor Calculator")
-    vs = st
+    st.subheader("💡 LED Current Limiting Resistor Calculator")
+    vs = st.number_input("Supply Voltage (Vcc)", value=5.0)
+    vl = st.number_input("LED Forward Voltage (Vf)", value=2.0)
+    il = st.number_input("LED Current (mA)", value=20.0)
+    if st.button("Calculate Resistor"):
+        if vs > vl:
+            r = (vs - vl) / (il / 1000.0)
+            st.success(f"🎯 Required Resistor: **{r:.2f} Ω**")
+        else:
+            st.error("Supply must be greater than LED Voltage!")
+
+# 6. Capacitor Decoder
+elif menu_mode == "🔋 Capacitor Code Decoder":
+    st.subheader("🔋 Ceramic Capacitor Code Decoder")
+    code = st.text_input("Enter Code (e.g. 104):", value="104")
+    if st.button("Decode Capacitor"):
+        try:
+            pF = ((int(code[0]) * 10) + int(code[1])) * (10 ** int(code[2]))
+            st.success(f"🎯 {pF} pF = {pF/1000} nF = {pF/1000000} µF")
+        except:
+            st.error("Invalid Code.")
+
+# 7. 555 Timer
+elif menu_mode == "⏱️ 555 Timer Frequency Calculator":
+    st.subheader("⏱️ 555 Astable Multivibrator Frequency Calculator")
+    r1 = st.number_input("R1 (kΩ)", value=1.0) * 1000
+    r2 = st.number_input("R2 (kΩ)", value=10.0) * 1000
+    c = st.number_input("C (µF)", value=0.1) / 1000000
+    if st.button("Calculate Frequency"):
+        f = 1.44 / ((r1 + 2 * r2) * c)
+        st.success(f"🎯 Frequency: **{f/1000:.2f} kHz**" if f >= 1000 else f"🎯 Frequency: **{f:.2f} Hz**")
+
+# 8. Voltage Divider & RC Filters
+elif menu_mode == "⚡ Voltage Divider & RC Filters":
+    st.subheader("⚡ Voltage Divider & RC Filter Calculator")
+    vin = st.number_input("Vin (V)", value=12.0)
+    r1 = st.number_input("R1 (kΩ)", value=10.0)
+    r2 = st.number_input("R2 (kΩ)", value=10.0)
+    if st.button("Calculate Vout"):
+        vout = vin * (r2 / (r1 + r2))
+        st.success(f"🎯 Vout: **{vout:.3f} V**")
+
+# 9. Op-Amp Gain
+elif menu_mode == "📈 Op-Amp Gain Calculator":
+    st.subheader("📈 Operational Amplifier (Op-Amp) Gain Calculator")
+    mode = st.radio("Mode", ["Inverting", "Non-Inverting"])
+    rin = st.number_input("Rin / R1 (kΩ)", value=10.0)
+    rf = st.number_input("Rf (kΩ)", value=100.0)
+    if st.button("Calculate Gain"):
+        gain = - (rf / rin) if mode == "Inverting" else 1 + (rf / rin)
+        st.success(f"🎯 Voltage Gain (Av): **{gain:.2f}**")
