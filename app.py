@@ -1,16 +1,20 @@
 import streamlit as st
+import math
 
 st.set_page_config(page_title="Smart Electronics Lab Assistant", page_icon="⚡", layout="wide")
 
-st.title("⚡ Smart Electronics Lab Assistant & Calculators")
+st.title("⚡ Smart Electronics Lab Assistant & Advanced Calculators")
 st.markdown("A professional digital lab tool for E&TC students and electronics hobbyists.")
 
-# Sidebar Navigation for All Component Calculators
+# Expanded Sidebar Navigation for All Lab Tools
 tool = st.sidebar.selectbox("Select Lab Tool", [
     "🎨 Resistor Color Code Calculator",
     "💡 LED Series Resistor Calculator",
     "🔋 Capacitor Code Decoder",
     "⏱️ 555 Timer Frequency Calculator",
+    "⚡ Voltage Divider Calculator",
+    "🎛️ RC Filter Cutoff Frequency Calculator",
+    "📈 Op-Amp Gain Calculator (Inverting/Non-Inverting)",
     "🔌 Transistor & IC Pinout Reference"
 ])
 
@@ -121,7 +125,75 @@ elif tool == "⏱️ 555 Timer Frequency Calculator":
         st.success(f"🎯 Output Frequency: **{freq_str}**")
         st.info(f"Time Period (T): {1/frequency:.4f} seconds")
 
-# 5. Transistor & IC Pinout Reference
+# 5. Voltage Divider Calculator (NEW)
+elif tool == "⚡ Voltage Divider Calculator":
+    st.subheader("⚡ Voltage Divider Circuit Calculator")
+    st.write("Calculate the output voltage ($V_{out}$) across resistor $R_2$:")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        vin = st.number_input("Input Voltage ($V_{in}$ in Volts)", value=12.0)
+    with col2:
+        r1_val = st.number_input("Resistor $R_1$ (in kΩ)", value=10.0)
+    with col3:
+        r2_val = st.number_input("Resistor $R_2$ (in kΩ)", value=10.0)
+        
+    if st.button("Calculate Vout"):
+        # Vout = Vin * (R2 / (R1 + R2))
+        vout = vin * (r2_val / (r1_val + r2_val))
+        st.success(f"🎯 Output Voltage ($V_{out}$): **{vout:.3f} V**")
+        st.info(f"Current flowing through circuit: **{(vin / ((r1_val + r2_val) * 1000)) * 1000:.3f} mA**")
+
+# 6. RC Filter Cutoff Frequency Calculator (NEW)
+elif tool == "🎛️ RC Filter Cutoff Frequency Calculator":
+    st.subheader("🎛️ RC Low-Pass / High-Pass Filter Calculator")
+    st.write("Calculate the cutoff (corner) frequency ($f_c$) for an RC filter:")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        r_ohms = st.number_input("Resistor $R$ (in Ohms)", value=1000.0)
+    with col2:
+        c_nf = st.number_input("Capacitor $C$ (in nanofarads - nF)", value=100.0)
+        
+    if st.button("Calculate Cutoff Frequency"):
+        r = r_ohms
+        c = c_nf * 1e-9 # Convert nF to Farads
+        # fc = 1 / (2 * pi * R * C)
+        fc = 1 / (2 * math.pi * r * c)
+        
+        if fc >= 1000000:
+            fc_str = f"{fc / 1000000:.2f} MHz"
+        elif fc >= 1000:
+            fc_str = f"{fc / 1000:.2f} kHz"
+        else:
+            fc_str = f"{fc:.2f} Hz"
+            
+        st.success(f"🎯 Cutoff Frequency ($f_c$): **{fc_str}**")
+
+# 7. Op-Amp Gain Calculator (NEW)
+elif tool == "📈 Op-Amp Gain Calculator (Inverting/Non-Inverting)":
+    st.subheader("📈 Operational Amplifier (Op-Amp) Gain Calculator")
+    mode = st.radio("Select Configuration", ["Inverting Amplifier", "Non-Inverting Amplifier"])
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        rin_k = st.number_input("Input Resistor ($R_{in}$ / $R_1$ in kΩ)", value=10.0)
+    with col2:
+        rf_k = st.number_input("Feedback Resistor ($R_f$ in kΩ)", value=100.0)
+        
+    if st.button("Calculate Voltage Gain"):
+        if mode == "Inverting Amplifier":
+            # Gain = - (Rf / Rin)
+            gain = - (rf_k / rin_k)
+            st.success(f"🎯 Voltage Gain ($A_v$): **{gain:.2f}**")
+            st.info("Note: Negative sign indicates phase inversion (180° phase shift).")
+        else:
+            # Gain = 1 + (Rf / R1)
+            gain = 1 + (rf_k / rin_k)
+            st.success(f"🎯 Voltage Gain ($A_v$): **{gain:.2f}**")
+            st.info("Note: Non-inverting amplifier output is in phase with input.")
+
+# 8. Transistor & IC Pinout Reference
 elif tool == "🔌 Transistor & IC Pinout Reference":
     st.subheader("🔌 Transistor & IC Pinout Reference Guide")
     st.write("Select a component to view its exact pin configuration and maximum ratings:")
