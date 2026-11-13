@@ -3,7 +3,7 @@ import math
 
 st.set_page_config(page_title="Universal Electronics & Lab Assistant", page_icon="⚡", layout="wide")
 
-st.title("⚡ Comprehensive Digital & Power Electronics Lab Reference")
+st.title("⚡ st.title("⚡ Smart Electronics Lab Assistant & Advanced Calculators")
 st.markdown("Search **any Digital IC, Logic Gate, Power Device (SCR/TRIAC/IGBT), or Linear IC** instantly.")
 
 # Comprehensive Master Database for ALL Digital, Linear & Power Electronics Components
