@@ -5,43 +5,43 @@ from sklearn.cluster import KMeans
 
 st.set_page_config(page_title="Smart Electronics Lab Assistant", page_icon="⚡", layout="wide")
 
-st.title("⚡ Smart Electronics Lab Assistant (All Components)")
-st.markdown("E&TC Students, Lecturers, ani Electronics Hobbyists sathi digital lab tool.")
+st.title("⚡ Smart Electronics Lab Assistant & Value Finder")
+st.markdown("A comprehensive digital tool for E&TC students and electronics hobbyists to identify components and calculate values.")
 
-# Sidebar Navigation for All Components
-menu = st.sidebar.selectbox("Select Component / Tool", [
-    "📷 General Image Color & Component Analyzer",
-    "🎨 Resistor Value Calculator",
+# Sidebar Navigation in English
+menu = st.sidebar.selectbox("Select Tool / Calculator", [
+    "📷 Component Image & Color Analyzer",
+    "🎨 Resistor Color Code Calculator",
+    "🔢 SMD Resistor Code Decoder",
     "🔋 Capacitor Code Decoder",
-    "🔌 Transistor Pinout & Reference",
-    "⚡ IC & Regulator Guide (555, 741, 7805)",
-    "💡 Diode & LED Voltage Drop Reference"
+    "🔌 Transistor Pinout Reference",
+    "⚡ IC & Voltage Regulator Guide"
 ])
 
-# 1. General Image Color & Component Analyzer
-if menu == "📷 General Image Color & Component Analyzer":
-    st.subheader("🔍 Universal Component Image Analyzer")
-    st.write("Konthya pan electronic component chi image upload kara (Resistor, Capacitor, PCB board, etc.) ani tyatil main color palette/features analyze kara:")
+# 1. Component Image & Color Analyzer
+if menu == "📷 Component Image & Color Analyzer":
+    st.subheader("Universal Component Image & Color Analyzer")
+    st.write("Upload an image of an electronic component to analyze its color distribution and dominant color palette:")
     
-    uploaded_file = st.file_uploader("Upload Component Image...", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Upload Component Image", type=["jpg", "jpeg", "png"])
     
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
-        st.image(image, caption='Uploaded Component', width=350)
+        st.image(image, caption='Uploaded Electronic Component', width=350)
         
-        st.write("Analyzing component colors and pixel distribution...")
+        st.write("Analyzing component features and color bands...")
         
         # Image processing via KMeans for dominant colors
         image_resized = image.resize((100, 100))
         img_array = np.array(image_resized)
         pixels = img_array.reshape(-1, 3)
         
-        n_colors = 5
+        n_colors = 4
         kmeans = KMeans(n_clusters=n_colors, n_init=10)
         kmeans.fit(pixels)
         colors = kmeans.cluster_centers_.astype(int)
         
-        st.subheader("Dominant Color Palette (Component Analysis):")
+        st.subheader("Extracted Dominant Color Palette:")
         cols = st.columns(n_colors)
         for i, color in enumerate(colors):
             hex_color = '#{:02x}{:02x}{:02x}'.format(color[0], color[1], color[2])
@@ -52,10 +52,12 @@ if menu == "📷 General Image Color & Component Analyzer":
                 )
                 st.write(f"RGB: {tuple(color)}")
                 st.write(f"Hex: {hex_color}")
+        st.info("Tip: Use the specialized calculators in the sidebar to get exact resistor or capacitor values based on these colors or printed codes.")
 
-# 2. Resistor Calculator
-elif menu == "🎨 Resistor Value Calculator":
-    st.subheader("🎨 Resistor Color Code Calculator (4-Band)")
+# 2. Resistor Color Code Calculator
+elif menu == "🎨 Resistor Color Code Calculator":
+    st.subheader("4-Band Resistor Value Calculator")
+    st.write("Select the color bands of your resistor to calculate its exact resistance value:")
     
     color_dict = {
         'Black': (0, 1), 'Brown': (1, 10), 'Red': (2, 100), 
@@ -65,13 +67,13 @@ elif menu == "🎨 Resistor Value Calculator":
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        band1 = st.selectbox("Band 1", list(color_dict.keys())[1:])
+        band1 = st.selectbox("Band 1 (1st Digit)", list(color_dict.keys())[1:])
     with col2:
-        band2 = st.selectbox("Band 2", list(color_dict.keys()))
+        band2 = st.selectbox("Band 2 (2nd Digit)", list(color_dict.keys()))
     with col3:
-        multiplier = st.selectbox("Multiplier", list(color_dict.keys()))
+        multiplier = st.selectbox("Band 3 (Multiplier)", list(color_dict.keys()))
     with col4:
-        tolerance = st.selectbox("Tolerance", ["Gold (±5%)", "Silver (±10%)"])
+        tolerance = st.selectbox("Band 4 (Tolerance)", ["Gold (±5%)", "Silver (±10%)"])
         
     if st.button("Calculate Resistance"):
         d1 = color_dict[band1][0]
@@ -88,10 +90,49 @@ elif menu == "🎨 Resistor Value Calculator":
             
         st.success(f"Calculated Resistor Value: **{val_str}** ({tolerance})")
 
-# 3. Capacitor Code Decoder
+# 3. SMD Resistor Code Decoder
+elif menu == "🔢 SMD Resistor Code Decoder":
+    st.subheader("SMD Resistor Code Decoder")
+    st.write("Enter the 3-digit or 4-digit code printed on surface-mount (SMD) resistors:")
+    
+    smd_code = st.text_input("Enter SMD Code (e.g., 472, 1001):", value="472")
+    
+    if st.button("Decode SMD Resistor"):
+        try:
+            code = smd_code.strip()
+            if len(code) == 3:
+                d1 = int(code[0])
+                d2 = int(code[1])
+                mult = int(code[2])
+                resistance = ((d1 * 10) + d2) * (10 ** mult)
+            elif len(code) == 4:
+                d1 = int(code[0])
+                d2 = int(code[1])
+                d3 = int(code[2])
+                mult = int(code[3])
+                resistance = ((d1 * 100) + (d2 * 10) + d3) * (10 ** mult)
+            else:
+                resistance = None
+                
+            if resistance is not None:
+                if resistance >= 1000000:
+                    val_str = f"{resistance / 1000000} MΩ"
+                elif resistance >= 1000:
+                    val_str = f"{resistance / 1000} kΩ"
+                else:
+                    val_str = f"{resistance} Ω"
+                st.success(f"Decoded Resistance Value: **{val_str}**")
+            else:
+                st.error("Please enter a valid 3-digit or 4-digit SMD code.")
+        except:
+            st.error("Invalid input format. Please try again.")
+
+# 4. Capacitor Code Decoder
 elif menu == "🔋 Capacitor Code Decoder":
-    st.subheader("🔋 Ceramic & Electrolytic Capacitor Decoder")
-    code_input = st.text_input("Enter Capacitor Code (e.g., 104, 222):", value="104")
+    st.subheader("Ceramic Capacitor Code Decoder")
+    st.write("Enter the 3-digit code printed on ceramic capacitors (e.g., 104, 103):")
+    
+    code_input = st.text_input("Enter Capacitor Code:", value="104")
     
     if st.button("Decode Capacitor"):
         if len(code_input) >= 3:
@@ -103,67 +144,53 @@ elif menu == "🔋 Capacitor Code Decoder":
                 nF = pF / 1000
                 uF = pF / 1000000
                 
-                st.success(f"Results for code **{code_input}**:")
+                st.success(f"Decoded Values for Code **{code_input}**:")
                 st.write(f"- **Picofarads (pF):** {pF} pF")
                 st.write(f"- **Nanofarads (nF):** {nF} nF")
                 st.write(f"- **Microfarads (µF):** {uF} µF")
             except:
-                st.error("Krupaya yogya numeric code taka (eg. 104).")
+                st.error("Please enter a valid numeric code.")
 
-# 4. Transistor Pinout & Reference
-elif menu == "🔌 Transistor Pinout & Reference":
-    st.subheader("🔌 Transistor Pinout Guide")
-    transistor = st.selectbox("Select Transistor", ["BC547 / BC548 / BC549 (NPN)", "BC557 / BC558 (PNP)", "2N2222 (NPN)", "TIP121 / TIP122 (Darlington NPN)"])
+# 5. Transistor Pinout Reference
+elif menu == "🔌 Transistor Pinout Reference":
+    st.subheader("Transistor Pinout & Specifications Guide")
+    transistor = st.selectbox("Select Transistor", ["BC547 / BC548 (NPN)", "BC557 / BC558 (PNP)", "2N2222 (NPN)", "TIP121 / TIP122 (Darlington NPN)"])
     
     if "BC547" in transistor:
         st.write("**Type:** NPN BJT (General Purpose)")
-        st.write("**Pinout (Left to Right, flat face facing you):** Collector (C) - Base (B) - Emitter (E)")
-        st.write("**Max Ratings:** $V_{CEO} = 45V$, $I_C = 100mA$")
+        st.write("**Pinout Configuration (Left to Right, flat face forward):** Collector (C) - Base (B) - Emitter (E)")
+        st.write("**Maximum Ratings:** $V_{CEO} = 45V$, $I_C = 100mA$")
     elif "BC557" in transistor:
         st.write("**Type:** PNP BJT")
-        st.write("**Pinout (Left to Right, flat face facing you):** Collector (C) - Base (B) - Emitter (E)")
-        st.write("**Max Ratings:** $V_{CEO} = -45V$, $I_C = -100mA$")
+        st.write("**Pinout Configuration (Left to Right, flat face forward):** Collector (C) - Base (B) - Emitter (E)")
+        st.write("**Maximum Ratings:** $V_{CEO} = -45V$, $I_C = -100mA$")
     elif "2N2222" in transistor:
         st.write("**Type:** NPN BJT (Switching & Amplification)")
-        st.write("**Pinout (Metal Can / TO-92):** Emitter - Base - Collector (Tab aligned)")
-        st.write("**Max Ratings:** $V_{CEO} = 30V$, $I_C = 800mA$")
+        st.write("**Pinout Configuration:** Emitter - Base - Collector")
+        st.write("**Maximum Ratings:** $V_{CEO} = 30V$, $I_C = 800mA$")
     elif "TIP121" in transistor:
-        st.write("**Type:** NPN Darlington Transistor (High Gain)")
-        st.write("**Pinout (Left to Right, metal tab top):** Base (B) - Collector (C) - Emitter (E)")
-        st.write("**Max Ratings:** $V_{CEO} = 80V$, $I_C = 5A$")
+        st.write("**Type:** NPN Darlington Transistor")
+        st.write("**Pinout Configuration (Left to Right, metal tab on top):** Base (B) - Collector (C) - Emitter (E)")
+        st.write("**Maximum Ratings:** $V_{CEO} = 80V$, $I_C = 5A$")
 
-# 5. IC & Regulator Guide
-elif menu == "⚡ IC & Regulator Guide (555, 741, 7805)":
-    st.subheader("⚡ Integrated Circuits (ICs) & Regulators Reference")
+# 6. IC & Voltage Regulator Guide
+elif menu == "⚡ IC & Voltage Regulator Guide":
+    st.subheader("Integrated Circuits & Voltage Regulators Reference")
     ic_choice = st.selectbox("Select IC", ["IC 555 Timer", "IC 741 Operational Amplifier", "IC 7805 Voltage Regulator (5V)", "IC 7812 Voltage Regulator (12V)"])
     
     if "555" in ic_choice:
         st.write("**Description:** Precision Timing Circuit (Astable, Monostable, Bistable modes)")
-        st.write("**Pins (8-Pin DIP):**")
+        st.write("**Pinout (8-Pin DIP):**")
         st.markdown("1. GND | 2. Trigger | 3. Output | 4. Reset | 5. Control Voltage | 6. Threshold | 7. Discharge | 8. $V_{CC}$")
     elif "741" in ic_choice:
         st.write("**Description:** General Purpose Operational Amplifier")
-        st.write("**Pins (8-Pin DIP):**")
+        st.write("**Pinout (8-Pin DIP):**")
         st.markdown("1. Offset Null | 2. Inverting Input (-) | 3. Non-Inverting Input (+) | 4. $V_{EE}$ (-Supply) | 5. Offset Null | 6. Output | 7. $V_{CC}$ (+Supply) | 8. Not Connected")
     elif "7805" in ic_choice:
         st.write("**Description:** 5V Fixed Positive Voltage Regulator")
-        st.write("**Pins (TO-220 3-Pin):**")
-        st.markdown("1. Input ($V_{IN}$ - 7V to 35V) | 2. Ground (GND) | 3. Output ($+5V$ Fixed)")
+        st.write("**Pinout (TO-220 3-Pin):**")
+        st.markdown("1. Input ($V_{IN}$) | 2. Ground (GND) | 3. Output ($+5V$ Fixed)")
     elif "7812" in ic_choice:
         st.write("**Description:** 12V Fixed Positive Voltage Regulator")
-        st.write("**Pins (TO-220 3-Pin):**")
-        st.markdown("1. Input ($V_{IN}$ - 14V to 35V) | 2. Ground (GND) | 3. Output ($+12V$ Fixed)")
-
-# 6. Diode & LED Reference
-elif menu == "💡 Diode & LED Voltage Drop Reference":
-    st.subheader("💡 Diodes & LEDs Characteristics Reference")
-    st.write("Electronics madhe vaparlamya mahatvachya diodes ani LEDs che standard forward voltage drops:")
-    
-    st.markdown("""
-    * **1N4007 Rectifier Diode:** $V_F \approx 0.7V$ (Max Current: 1A, Max Reverse Voltage: 1000V)
-    * **1N4148 Switching Diode:** $V_F \approx 0.7V$ (High-speed signal switching)
-    * **Red LED:** $V_F \approx 1.8V - 2.0V$
-    * **Green / Yellow LED:** $V_F \approx 2.0V - 2.2V$
-    * **Blue / White LED:** $V_F \approx 3.0V - 3.3V$
-    * **Zener Diodes:** Available in various breakdown voltages ($3.3V, 5.1V, 9.1V, 12V$, etc.) for voltage regulation.
-    """)
+        st.write("**Pinout (TO-220 3-Pin):**")
+        st.markdown("1. Input ($V_{IN}$) | 2. Ground (GND) | 3. Output ($+12V$ Fixed)")
