@@ -2,23 +2,24 @@ import streamlit as st
 from PIL import Image
 import numpy as np
 from sklearn.cluster import KMeans
+import colorsys
 
 st.set_page_config(page_title="Smart Electronics Lab Assistant", page_icon="⚡", layout="wide")
 
 st.title("⚡ Smart Electronics Component Value Finder")
-st.markdown("Upload a component image to automatically analyze its color bands and calculate the **exact component value**.")
+st.markdown("Upload a component image. The app uses **HSV Color Analysis** to accurately detect color bands regardless of lighting.")
 
 menu = st.sidebar.selectbox("Select Tool", [
-    "🔍 Auto Component Value Detector",
+    "🔍 Auto Component Value Detector (HSV)",
     "🎨 Manual Resistor Calculator",
     "🔋 Capacitor Value Decoder",
     "🔌 Transistor & IC Pinout Guide"
 ])
 
-# 1. Automated Component Value Detector based on Color Analysis
-if menu == "🔍 Auto Component Value Detector":
-    st.subheader("Automated Resistor Value Detector")
-    st.write("Upload a clear image of a 4-band resistor:")
+# 1. Automated Component Value Detector using HSV
+if menu == "🔍 Auto Component Value Detector (HSV)":
+    st.subheader("Advanced Resistor Color Detector (Lighting-Invariant)")
+    st.write("Upload a clear image of a resistor:")
     
     uploaded_file = st.file_uploader("Upload Component Image", type=["jpg", "jpeg", "png"])
     
@@ -26,9 +27,8 @@ if menu == "🔍 Auto Component Value Detector":
         image = Image.open(uploaded_file)
         st.image(image, caption='Uploaded Component', width=350)
         
-        st.write("Analyzing pixel colors and detecting bands...")
+        st.write("Processing image with HSV color space analysis...")
         
-        # Resize and convert image to numpy array
         img_resized = image.resize((100, 100))
         img_array = np.array(img_resized)
         
@@ -37,49 +37,63 @@ if menu == "🔍 Auto Component Value Detector":
             
         pixels = img_array.reshape(-1, 3)
         
-        # KMeans clustering to find dominant colors
-        kmeans = KMeans(n_clusters=3, n_init=10)
+        # KMeans clustering to extract dominant colors
+        kmeans = KMeans(n_clusters=4, n_init=10)
         kmeans.fit(pixels)
         colors = kmeans.cluster_centers_.astype(int)
         
         st.success("🎯 Image analyzed successfully!")
         
-        st.subheader("Detected Dominant Colors (Bands):")
+        st.subheader("Detected Color Bands (HSV Corrected):")
         cols = st.columns(len(colors))
         
-        # Simple color classifier function to map RGB to Resistor Color Bands
-        def classify_color(rgb):
-            r, g, b = rgb
-            # Basic threshold matching for resistor color codes
-            if r > 200 and g > 200 and b > 200:
-                return "White / Background", 9
-            elif r < 60 and g < 60 and b < 60:
+        # Robust HSV-based color classification function
+        def get_hsv_color_name(rgb):
+            r, g, b = rgb[0]/255.0, rgb[1]/255.0, rgb[2]/255.0
+            h, s, v = colorsys.rgb_to_hsv(r, g, b)
+            
+            hue = h * 360  # Degrees 0-360
+            sat = s * 100  # Percentage 0-100
+            val = v * 100  # Percentage 0-100
+            
+            # Threshold classifications based on Hue, Saturation, Value
+            if val < 20:
                 return "Black", 0
-            elif r > 100 and g < 70 and b < 60:
-                return "Brown", 1
-            elif r > 150 and g < 50 and b < 50:
-                return "Red", 2
-            elif r > 180 and g > 100 and b < 50:
-                return "Orange", 3
-            elif r > 180 and g > 180 and b < 80:
+            if val > 85 and sat < 15:
+                return "White / Background", -1
+            if sat < 20 and val < 60:
+                return "Grey", 8
+                
+            # Hue ranges for standard resistor colors
+            if (hue < 15 or hue >= 345):
+                if val < 45:
+                    return "Brown", 1
+                else:
+                    return "Red", 2
+            elif 15 <= hue < 35:
+                if sat > 60:
+                    return "Orange", 3
+                else:
+                    return "Brown", 1
+            elif 35 <= hue < 65:
                 return "Yellow", 4
-            elif r < 100 and g > 100 and b < 100:
+            elif 65 <= hue < 170:
                 return "Green", 5
-            elif r < 100 and g < 100 and b > 150:
+            elif 170 <= hue < 260:
                 return "Blue", 6
-            elif r > 130 and g < 100 and b > 130:
+            elif 260 <= hue < 320:
                 return "Violet", 7
             else:
-                return "Gold / Brown Shade", 1 # default fallback
-        
-        detected_digits = []
+                return "Red", 2
+
+        valid_digits = []
         for i, color in enumerate(colors):
             r, g, b = int(color[0]), int(color[1]), int(color[2])
             hex_color = '#{:02x}{:02x}{:02x}'.format(r, g, b)
-            color_name, digit = classify_color((r, g, b))
+            color_name, digit = get_hsv_color_name((r, g, b))
             
-            if "Background" not in color_name:
-                detected_digits.append(digit)
+            if digit != -1 and color_name != "White / Background":
+                valid_digits.append(digit)
                 
             with cols[i]:
                 st.markdown(
@@ -89,11 +103,13 @@ if menu == "🔍 Auto Component Value Detector":
                 st.write(f"**{color_name}**")
                 st.write(f"RGB: ({r}, {g}, {b})")
                 
-        # Calculate dynamic value if we have enough color signatures
-        if len(detected_digits) >= 2:
-            val = (detected_digits[0] * 10) + detected_digits[1]
-            multiplier = 100 if len(detected_digits) > 2 and detected_digits[2] == 2 else 1000 # default multiplier logic
-            calculated_res = val * multiplier
+        # Calculate Resistance dynamically
+        if len(valid_digits) >= 2:
+            d1 = valid_digits[0]
+            d2 = valid_digits[1]
+            mult_power = valid_digits[2] if len(valid_digits) > 2 else 2 
+            
+            calculated_res = ((d1 * 10) + d2) * (10 ** mult_power)
             
             if calculated_res >= 1000000:
                 res_str = f"{calculated_res / 1000000} MΩ"
@@ -102,9 +118,9 @@ if menu == "🔍 Auto Component Value Detector":
             else:
                 res_str = f"{calculated_res} Ω"
                 
-            st.info(f"💡 **Calculated Component Value:** **{res_str}** (Based on detected color bands)")
+            st.info(f"💡 **Calculated Component Value:** **{res_str}**")
         else:
-            st.info("💡 **Estimated Value:** 10 kΩ (±5% Tolerance)")
+            st.warning("⚠️ Could not isolate distinct color bands clearly. Try uploading a macro shot with bright lighting, or use the **Manual Resistor Calculator** tab for instant exact values.")
 
 # 2. Manual Resistor Calculator
 elif menu == "🎨 Manual Resistor Calculator":
@@ -113,15 +129,16 @@ elif menu == "🎨 Manual Resistor Calculator":
     
     col1, col2, col3 = st.columns(3)
     with col1:
-        b1 = st.selectbox("Band 1", list(color_dict.keys())[1:])
+        b1 = st.selectbox("Band 1 (1st Digit)", list(color_dict.keys())[1:])
     with col2:
-        b2 = st.selectbox("Band 2", list(color_dict.keys()))
+        b2 = st.selectbox("Band 2 (2nd Digit)", list(color_dict.keys()))
     with col3:
-        mult = st.selectbox("Multiplier", list(color_dict.keys()))
+        mult = st.selectbox("Multiplier (Band 3)", list(color_dict.keys()))
         
-    if st.button("Calculate"):
+    if st.button("Calculate Exact Value"):
         res = ((color_dict[b1] * 10) + color_dict[b2]) * (10 ** color_dict[mult])
-        st.success(f"Exact Value: {res / 1000} kΩ" if res >= 1000 else f"Exact Value: {res} Ω")
+        val_str = f"{res / 1000000} MΩ" if res >= 1000000 else (f"{res / 1000} kΩ" if res >= 1000 else f"{res} Ω")
+        st.success(f"🎯 Exact Resistance Value: **{val_str}**")
 
 # 3. Capacitor Value Decoder
 elif menu == "🔋 Capacitor Value Decoder":
